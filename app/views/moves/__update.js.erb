@@ -1,0 +1,5 @@
+<% if @move.valid? %>
+  $('#board').html('<%= escape_javascript(render partial: "board", locals: { game: @game }) %>');
+<% else %>
+  alert('Invalid move! Please try again.');
+<% end %>

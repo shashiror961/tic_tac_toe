@@ -1,0 +1,72 @@
+<div id="board">
+  <% @game.board.each_with_index do |row, i| %>
+    <div class="row">
+      <% row.each_with_index do |cell, j| %>
+        <div class="cell" data-row="<%= i %>" data-col="<%= j %>">
+          <%= cell %>
+        </div>
+      <% end %>
+    </div>
+  <% end %>
+</div>
+
+<div id="buttons">
+  <button id="submitBtn" class="btn btn-primary">End Turn</button>
+  <button onclick="window.location.href='<%= games_path %>'" class="btn btn-danger">Reset</button>
+</div>
+
+<script>
+  $(document).ready(function() {
+    const cells = $('.cell');
+    const submitBtn = $('#submitBtn');
+
+    let selectedCell;
+    cells.each(function() {
+      $(this).click(function() {
+        if ($(this).text() === 'X' || $(this).text() === 'O') {
+          alert('This cell is already occupied. Please choose another cell.');
+          return;
+        }
+        const  currentPlayer = '<%= @game.current_player_symbol %>';
+
+        $(this).text(currentPlayer);
+        // Remove content from previously selected cell
+        if (selectedCell) {
+          selectedCell.text('');
+        }
+        
+        selectedCell = $(this);
+      });
+    });
+
+    submitBtn.click(function() {
+      if (selectedCell) {
+        const row = selectedCell.data('row');
+        const col = selectedCell.data('col');
+        const gameId = <%= @game.id %>;
+        // Send the row and column data to the server
+        $.ajax({
+          url: `/games/${gameId}/moves`,
+          type: 'POST',
+          dataType: 'json',
+          contentType: 'application/json',
+          headers: {
+            'X-CSRF-Token': $('meta[name="csrf-token"]').attr('content')
+          },
+          data: JSON.stringify({ row, col }),
+          success: function(response) {
+            if (response.success) {
+              if (response.result) {
+                alert("Winner: " + response.game.winner);
+              } else {
+                location.reload();
+              }
+            }
+          }
+        });
+      } else {
+        alert('Please select a cell first.');
+      }
+    });
+  });
+</script>
